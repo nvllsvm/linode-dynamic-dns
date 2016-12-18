@@ -1,0 +1,4 @@
+*.pyc
+__pycache__
+/dist
+/linode_dynamic_dns.egg-info
