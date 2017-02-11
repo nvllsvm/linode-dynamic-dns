@@ -9,6 +9,8 @@ import requests
 DEFAULT_IPV4_URL = 'https://ipv4.icanhazip.com'
 DEFAULT_IPV6_URL = 'https://ipv6.icanhazip.com'
 
+TIMEOUT = 15
+
 
 class LinodeAPI(object):
     api_url = 'https://api.linode.com/api/'
@@ -21,7 +23,7 @@ class LinodeAPI(object):
         params = self.default_parameters
         params.update(parameters)
 
-        response = requests.get(self.api_url, params=params)
+        response = requests.get(self.api_url, params=params, timeout=TIMEOUT)
         response.raise_for_status()
         data = response.json()
 
@@ -100,7 +102,7 @@ class LocalIP(object):
 
     def __retrieve_ip(self, url):
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=TIMEOUT)
             response.raise_for_status()
             return ipaddress.ip_address(response.text.strip())
         except:
