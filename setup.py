@@ -15,6 +15,7 @@ setup(
         'console_scripts': ['linode-dynamic-dns=linode_dynamic_dns:main']},
     classifiers=(
         'Development Status :: 5 - Production/Stable',
-        'License :: OSI Approved :: MIT License'
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.6'
     )
 )
