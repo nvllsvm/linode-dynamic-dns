@@ -9,6 +9,8 @@ import requests
 
 VERSION = pkg_resources.get_distribution('linode_dynamic_dns').version
 
+LOGGER = logging.getLogger(__name__)
+
 TIMEOUT = 15
 
 IP_URLS = {4: os.environ.get('IPV4_URL', 'https://ipv4.icanhazip.com'),
@@ -31,7 +33,7 @@ class LinodeAPI(object):
         data = response.json()
 
         if data['ERRORARRAY']:
-            logging.error(data['ERRORARRAY'])
+            LOGGER.error(data['ERRORARRAY'])
             raise Exception('Error making get.')
 
         return data["DATA"]
@@ -81,7 +83,7 @@ class LinodeResource(object):
             raise Exception('Unable to set IP')
 
         if new_ip.exploded != self.ip:
-            logging.info('New IP: {}'.format(new_ip.exploded))
+            LOGGER.info('New IP: {}'.format(new_ip.exploded))
             self.api.get({'api_action': 'domain.resource.update',
                           'ResourceID': self.id,
                           'Target': new_ip.exploded})
@@ -98,10 +100,10 @@ def get_ip(version):
     response.raise_for_status()
     ip = ipaddress.ip_address(response.text.strip())
     if ip and ip.version == version:
-        logging.info('Local IPv{}: {}'.format(version, ip))
+        LOGGER.info('Local IPv{}: {}'.format(version, ip))
         return ip
     else:
-        logging.info('No local IPv{}.'.format(version))
+        LOGGER.info('No local IPv{}.'.format(version))
         return None
 
 
