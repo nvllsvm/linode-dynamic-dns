@@ -1,4 +1,11 @@
+*.egg-info/
 *.pyc
-__pycache__
-/dist
-/linode_dynamic_dns.egg-info
+.cache
+.coverage
+.coverage.*
+.eggs
+__pycache__/
+build/
+dist/
+env/
+htmlcov/
