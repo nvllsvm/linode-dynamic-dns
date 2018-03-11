@@ -16,81 +16,57 @@ TIMEOUT = 15
 IP_URLS = {4: os.environ.get('IPV4_URL', 'https://ipv4.icanhazip.com'),
            6: os.environ.get('IPV6_URL', 'https://ipv6.icanhazip.com')}
 
+LINODE_API_URL = 'https://api.linode.com/api'
 
-class LinodeAPI(object):
-    api_url = 'https://api.linode.com/api/'
 
+class LinodeAPI:
     def __init__(self, key):
-        self.key = key
-        self.default_parameters = {'api_key': self.key}
+        self.session = requests.Session()
+        self.session.auth = (' ', key)
 
-    def get(self, parameters):
-        params = self.default_parameters
-        params.update(parameters)
-
-        response = requests.get(self.api_url, params=params, timeout=TIMEOUT)
+    def get(self, params):
+        response = self.session.get(LINODE_API_URL, params=params,
+                                    timeout=TIMEOUT)
         response.raise_for_status()
         data = response.json()
 
         if data['ERRORARRAY']:
             LOGGER.error(data['ERRORARRAY'])
-            raise Exception('Error making get.')
+            raise requests.RequestException
 
         return data["DATA"]
 
-    def find_domain_id(self, target_domain):
-        domains = self.get({'api_action': 'domain.list'})
-
-        domain_id = None
-        for domain in domains:
+    def get_domain_id(self, target_domain):
+        for domain in self.get({'api_action': 'domain.list'}):
             if domain['DOMAIN'] == target_domain:
-                domain_id = domain['DOMAINID']
-                break
-
-        if not domain_id:
-            raise Exception('Domain not found.')
-
-        return domain_id
+                return domain['DOMAINID']
 
     def get_resources(self, domain, host):
-        domain_id = self.find_domain_id(domain)
+        domain_id = self.get_domain_id(domain)
+        if domain_id is None:
+            raise KeyError('Cannot determine domain ID.')
 
-        params = {'api_action': 'domain.resource.list',
-                  'DomainId': domain_id}
-
-        resources = self.get(params)
+        resources = self.get(
+            {'api_action': 'domain.resource.list',
+             'DomainId': domain_id})
         for resource in resources:
             if resource['NAME'] == host:
                 yield LinodeResource(self, resource)
 
 
-class LinodeResource(object):
+class LinodeResource:
     def __init__(self, api, data):
-        self.id = data['RESOURCEID']
         self.api = api
+        self.id = data['RESOURCEID']
+        self.ip = ipaddress.ip_address(data['TARGET'])
 
-        self._ip_address = ipaddress.ip_address(data['TARGET'])
-
-    @property
-    def ip(self):
-        return self._ip_address.exploded
-
-    @ip.setter
-    def ip(self, value):
-        # validate new IP
-        new_ip = ipaddress.ip_address(value)
-        if new_ip.version != self.version:
-            raise Exception('Unable to set IP')
-
-        if new_ip.exploded != self.ip:
-            LOGGER.info('New IP: {}'.format(new_ip.exploded))
+    def update_ip(self, new_ip):
+        if new_ip != self.ip:
+            LOGGER.info(f'New IP: {new_ip}')
+            self.ip = new_ip
             self.api.get({'api_action': 'domain.resource.update',
                           'ResourceID': self.id,
                           'Target': new_ip.exploded})
-
-    @property
-    def version(self):
-        return self._ip_address.version
 
 
 @functools.lru_cache()
@@ -100,18 +76,11 @@ def get_ip(version):
     response.raise_for_status()
     ip = ipaddress.ip_address(response.text.strip())
     if ip and ip.version == version:
-        LOGGER.info('Local IPv{}: {}'.format(version, ip))
+        LOGGER.info(f'Local IPv{version}: {ip}')
         return ip
     else:
-        LOGGER.info('No local IPv{}.'.format(version))
+        LOGGER.info(f'No local IPv{version}.')
         return None
-
-
-def update_dns(key, domain, host):
-    api = LinodeAPI(key)
-
-    for resource in api.get_resources(domain, host):
-        resource.ip = get_ip(resource.version)
 
 
 def main():
@@ -122,7 +91,7 @@ def main():
 
     if args.version:
         print(VERSION)
-        exit()
+        return
 
     logging.basicConfig(level=logging.INFO)
 
@@ -130,7 +99,10 @@ def main():
     HOST = os.environ['HOST']
     TOKEN = os.environ['TOKEN']
 
-    update_dns(key=TOKEN, domain=DOMAIN, host=HOST)
+    api = LinodeAPI(TOKEN)
+
+    for resource in api.get_resources(DOMAIN, HOST):
+        resource.update_ip(get_ip(resource.ip.version))
 
 
 if __name__ == "__main__":
