@@ -1,11 +1,12 @@
 from setuptools import setup
 
-VERSION = '0.2.0'
+VERSION = '0.2.1'
 
 setup(
     name='linode-dynamic-dns',
     version=VERSION,
     description='Dynamically set the IP of Linode DNS records ',
+    long_description=open('README.rst').read(),
     author='Andrew Rabert',
     author_email='arabert@nullsum.net',
     url='https://github.com/nvllsvm/linode-dynamic-dns',
