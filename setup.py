@@ -1,18 +1,20 @@
-#!/usr/bin/env python
-
 from setuptools import setup
 
-from linode_dynamic_dns import __version__
+VERSION = '0.2.0'
 
 setup(
     name='linode-dynamic-dns',
-    version=__version__,
-    description='Python Distribution Utilities',
+    version=VERSION,
+    description='Dynamically set the IP of Linode DNS records ',
     author='Andrew Rabert',
     author_email='arabert@nullsum.net',
     url='https://github.com/nvllsvm/linode-dynamic-dns',
     packages=['linode_dynamic_dns'],
     install_requires=['requests'],
     entry_points={
-        'console_scripts': ['linode-dynamic-dns=linode_dynamic_dns.app:main']}
+        'console_scripts': ['linode-dynamic-dns=linode_dynamic_dns:main']},
+    classifiers=(
+        'Development Status :: 5 - Production/Stable',
+        'License :: OSI Approved :: MIT License'
+    )
 )
