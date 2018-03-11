@@ -1,4 +1,5 @@
 import argparse
+import functools
 import ipaddress
 import logging
 import os
@@ -6,8 +7,12 @@ import pkg_resources
 
 import requests
 
-TIMEOUT = 15
 VERSION = pkg_resources.get_distribution('linode_dynamic_dns').version
+
+TIMEOUT = 15
+
+IP_URLS = {4: os.environ.get('IPV4_URL', 'https://ipv4.icanhazip.com'),
+           6: os.environ.get('IPV6_URL', 'https://ipv6.icanhazip.com')}
 
 
 class LinodeAPI(object):
@@ -86,59 +91,25 @@ class LinodeResource(object):
         return self._ip_address.version
 
 
-class LocalIP(object):
-    def __init__(self, ipv4_url, ipv6_url):
-        self.ipv4_url = ipv4_url
-        self.ipv6_url = ipv6_url
-        self._retrieved_ipv4 = False
-        self._retrieved_ipv6 = False
-        self._ipv4 = None
-        self._ipv6 = None
-
-    def __retrieve_ip(self, url):
-        try:
-            response = requests.get(url, timeout=TIMEOUT)
-            response.raise_for_status()
-            return ipaddress.ip_address(response.text.strip())
-        except:
-            return None
-
-    @property
-    def ipv4(self):
-        if not self._retrieved_ipv4:
-            self._retrieved_ipv4 = True
-            ip = self.__retrieve_ip(self.ipv4_url)
-            if ip and ip.version == 4:
-                self._ipv4 = ip.exploded
-                logging.info('Local IPv4: {}'.format(self._ipv4))
-            else:
-                self._ipv4 = None
-                logging.info('No local IPv4.')
-        return self._ipv4
-
-    @property
-    def ipv6(self):
-        if not self._retrieved_ipv6:
-            self._retrieved_ipv6 = True
-            ip = self.__retrieve_ip(self.ipv6_url)
-            if ip and ip.version == 6:
-                self._ipv6 = ip.exploded
-                logging.info('Local IPv6: {}'.format(self._ipv6))
-            else:
-                self._ipv6 = None
-                logging.info('No local IPv6.')
-        return self._ipv6
+@functools.lru_cache()
+def get_ip(version):
+    url = IP_URLS[version]
+    response = requests.get(url, timeout=TIMEOUT)
+    response.raise_for_status()
+    ip = ipaddress.ip_address(response.text.strip())
+    if ip and ip.version == version:
+        logging.info('Local IPv{}: {}'.format(version, ip))
+        return ip
+    else:
+        logging.info('No local IPv{}.'.format(version))
+        return None
 
 
-def update_dns(key, domain, host, ipv4_url, ipv6_url):
+def update_dns(key, domain, host):
     api = LinodeAPI(key)
-    local_ip = LocalIP(ipv4_url, ipv6_url)
 
     for resource in api.get_resources(domain, host):
-        if resource.version == 4:
-            resource.ip = local_ip.ipv4
-        elif resource.version == 6:
-            resource.ip = local_ip.ipv6
+        resource.ip = get_ip(resource.version)
 
 
 def main():
@@ -153,17 +124,11 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
 
-    IPV4_URL = os.environ.get(
-        'IPV4_URL', 'https://ipv4.icanhazip.com')
-    IPV6_URL = os.environ.get(
-        'IPV6_URL', 'https://ipv6.icanhazip.com')
-
     DOMAIN = os.environ['DOMAIN']
     HOST = os.environ['HOST']
     TOKEN = os.environ['TOKEN']
 
-    update_dns(key=TOKEN, domain=DOMAIN, host=HOST,
-               ipv4_url=IPV4_URL, ipv6_url=IPV6_URL)
+    update_dns(key=TOKEN, domain=DOMAIN, host=HOST)
 
 
 if __name__ == "__main__":
