@@ -24,7 +24,7 @@ Environment Variables
 
 
 .. |Version| image:: https://img.shields.io/pypi/v/linode-dynamic-dns.svg?
-   :target: https://pypi.python.org/pypi/linode-dynamic-dns
+   :target: https://pypi.org/pypi/linode-dynamic-dns
 
 .. |License| image:: https://img.shields.io/github/license/nvllsvm/linode-dynamic-dns.svg?
    :target: https://github.com/nvllsvm/linode-dynamic-dns/blob/master/LICENSE
