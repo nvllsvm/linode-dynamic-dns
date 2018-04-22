@@ -8,7 +8,7 @@ setup(
     description='Dynamically set the IP of Linode DNS records ',
     long_description=open('README.rst').read(),
     author='Andrew Rabert',
-    author_email='arabert@nullsum.net',
+    author_email='ar@nullsum.net',
     url='https://github.com/nvllsvm/linode-dynamic-dns',
     packages=['linode_dynamic_dns'],
     install_requires=['requests'],
