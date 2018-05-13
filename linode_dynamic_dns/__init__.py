@@ -4,6 +4,7 @@ import ipaddress
 import logging
 import os
 import pkg_resources
+import sys
 
 import requests
 
@@ -16,57 +17,35 @@ TIMEOUT = 15
 IP_URLS = {4: os.environ.get('IPV4_URL', 'https://ipv4.icanhazip.com'),
            6: os.environ.get('IPV6_URL', 'https://ipv6.icanhazip.com')}
 
-LINODE_API_URL = 'https://api.linode.com/api'
+LINODE_API_URL = 'https://api.linode.com/v4'
 
 
 class LinodeAPI:
     def __init__(self, key):
         self.session = requests.Session()
-        self.session.auth = (' ', key)
+        self.session.headers = {'Authorization': f'Bearer {key}'}
 
-    def get(self, params):
-        response = self.session.get(LINODE_API_URL, params=params,
-                                    timeout=TIMEOUT)
-        response.raise_for_status()
-        data = response.json()
+    def request(self, method, path, **kwargs):
+        return self.session.request(
+            method, f'{LINODE_API_URL}/{path}', **kwargs)
 
-        if data['ERRORARRAY']:
-            LOGGER.error(data['ERRORARRAY'])
-            raise requests.RequestException
+    def get_domains(self):
+        response = self.request('GET', 'domains')
+        # TODO: Support pagination
+        yield from response.json()['data']
 
-        return data["DATA"]
+    def get_domain_records(self, domain_id):
+        response = self.request('GET', f'domains/{domain_id}/records')
+        yield from response.json()['data']
 
-    def get_domain_id(self, target_domain):
-        for domain in self.get({'api_action': 'domain.list'}):
-            if domain['DOMAIN'] == target_domain:
-                return domain['DOMAINID']
-
-    def get_resources(self, domain, host):
-        domain_id = self.get_domain_id(domain)
-        if domain_id is None:
-            raise KeyError('Cannot determine domain ID.')
-
-        resources = self.get(
-            {'api_action': 'domain.resource.list',
-             'DomainId': domain_id})
-        for resource in resources:
-            if resource['NAME'] == host:
-                yield LinodeResource(self, resource)
-
-
-class LinodeResource:
-    def __init__(self, api, data):
-        self.api = api
-        self.id = data['RESOURCEID']
-        self.ip = ipaddress.ip_address(data['TARGET'])
-
-    def update_ip(self, new_ip):
-        if new_ip != self.ip:
-            LOGGER.info(f'New IP: {new_ip}')
-            self.ip = new_ip
-            self.api.get({'api_action': 'domain.resource.update',
-                          'ResourceID': self.id,
-                          'Target': new_ip.exploded})
+    def update_domain_record_target(self, domain_id, record_id, target):
+        response = self.request(
+            'PUT',
+            f'domains/{domain_id}/records/{record_id}',
+            json={'target': str(target)}
+        )
+        if response.status_code != 200:
+            raise requests.HTTPError('Unexpected response', response=response)
 
 
 @functools.lru_cache()
@@ -95,14 +74,35 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
 
-    DOMAIN = os.environ['DOMAIN']
-    HOST = os.environ['HOST']
-    TOKEN = os.environ['TOKEN']
+    domain = os.environ['DOMAIN']
+    host = os.environ['HOST']
+    token = os.environ['TOKEN']
 
-    api = LinodeAPI(TOKEN)
+    api = LinodeAPI(token)
 
-    for resource in api.get_resources(DOMAIN, HOST):
-        resource.update_ip(get_ip(resource.ip.version))
+    domain_id = None
+    for d in api.get_domains():
+        if d['domain'] == domain:
+            domain_id = d['id']
+            break
+
+    if domain_id is None:
+        print(f'Error: Domain "{domain}" not found')
+        sys.exit(1)
+
+    # TODO: Delete invalid records and duplicates
+    for record in api.get_domain_records(domain_id):
+        if record['name'] == host:
+            new_target = None
+            record_type = record['type']
+            if record_type == 'A':
+                new_target = get_ip(4)
+            elif record_type == 'AAAA':
+                new_target = get_ip(6)
+
+            if new_target and new_target != record['target']:
+                api.update_domain_record_target(
+                    domain_id, record['id'], new_target)
 
 
 if __name__ == "__main__":
