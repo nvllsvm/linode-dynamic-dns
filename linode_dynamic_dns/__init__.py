@@ -3,9 +3,9 @@ import functools
 import ipaddress
 import logging
 import os
-import pkg_resources
 import sys
 
+import pkg_resources
 import requests
 
 VERSION = pkg_resources.get_distribution('linode_dynamic_dns').version
