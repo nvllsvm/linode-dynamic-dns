@@ -23,8 +23,20 @@ Environment Variables
 +----------+-----------------------------------------------------------------------------------------+
 
 
+Installation
+------------
+
+* `Arch Linux`_
+* `Docker`_
+* `PyPI`_
+
+
 .. |Version| image:: https://img.shields.io/pypi/v/linode-dynamic-dns.svg?
    :target: https://pypi.org/pypi/linode-dynamic-dns
 
 .. |License| image:: https://img.shields.io/github/license/nvllsvm/linode-dynamic-dns.svg?
    :target: https://github.com/nvllsvm/linode-dynamic-dns/blob/master/LICENSE
+
+.. _Arch Linux: https://aur.archlinux.org/packages/linode-dynamic-dns/
+.. _Docker: https://hub.docker.com/r/nvllsvm/linode-dynamic-dns/
+.. _PyPI: https://pypi.org/pypi/linode-dynamic-dns
