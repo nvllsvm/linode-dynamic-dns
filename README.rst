@@ -3,7 +3,7 @@ linode-dynamic-dns
 
 |Version| |License|
 
-A small utility to update Linode DNS records with your local IPv4 and IPv6 addresses.
+Update Linode DNS records with your local IPv4 and IPv6 addresses.
 
 Environment Variables
 ---------------------
@@ -15,7 +15,7 @@ Environment Variables
 +----------+-----------------------------------------------------------------------------------------+
 | DOMAIN   | The domain the host is a part of.                                                       |
 +----------+-----------------------------------------------------------------------------------------+
-| KEY      | Your Linode API access token.                                                           |
+| TOKEN    | Your Linode API access token.                                                           |
 +----------+-----------------------------------------------------------------------------------------+
 | IPV4_URL | The URL which returns your local IPv4 address (default ``https://ipv4.icanhazip.com/``) |
 +----------+-----------------------------------------------------------------------------------------+
