@@ -39,6 +39,7 @@ class LinodeAPI:
         yield from response.json()['data']
 
     def update_domain_record_target(self, domain_id, record_id, target):
+        LOGGER.info(f'Updating IPv{target.version} record')
         response = self.request(
             'PUT',
             f'domains/{domain_id}/records/{record_id}',
