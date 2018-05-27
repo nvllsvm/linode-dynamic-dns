@@ -93,16 +93,17 @@ def main():
     # TODO: Delete invalid records and duplicates
     for record in api.get_domain_records(domain_id):
         if record['name'] == host:
-            new_target = None
+            local_ip = None
             record_type = record['type']
             if record_type == 'A':
-                new_target = get_ip(4)
+                local_ip = get_ip(4)
             elif record_type == 'AAAA':
-                new_target = get_ip(6)
+                local_ip = get_ip(6)
 
-            if new_target and new_target != record['target']:
+            record_ip = ipaddress.ip_address(record['target'])
+            if local_ip and local_ip != record_ip:
                 api.update_domain_record_target(
-                    domain_id, record['id'], new_target)
+                    domain_id, record['id'], local_ip)
 
 
 if __name__ == "__main__":
