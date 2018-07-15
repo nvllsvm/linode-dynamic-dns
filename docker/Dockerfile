@@ -1,8 +1,7 @@
 FROM alpine:edge
 
-RUN apk update && \
-    apk add python3 && \
-    pip3 install linode-dynamic-dns
+RUN apk add --no-cache python3 && \
+    pip3 install --no-cache-dir linode-dynamic-dns
 
 ENV FREQUENCY=15
 
