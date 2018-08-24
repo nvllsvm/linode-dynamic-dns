@@ -14,9 +14,9 @@ setup(
     install_requires=['requests'],
     entry_points={
         'console_scripts': ['linode-dynamic-dns=linode_dynamic_dns:main']},
-    classifiers=(
+    classifiers=[
         'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6'
-    )
+    ]
 )
