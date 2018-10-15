@@ -1,9 +1,9 @@
 import argparse
-import functools
 import ipaddress
 import logging
 import os
 import sys
+import time
 
 import pkg_resources
 import requests
@@ -49,7 +49,6 @@ class LinodeAPI:
             raise requests.HTTPError('Unexpected response', response=response)
 
 
-@functools.lru_cache()
 def get_ip(version):
     url = IP_URLS[version]
     response = requests.get(url, timeout=TIMEOUT)
@@ -63,24 +62,7 @@ def get_ip(version):
         return None
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--version', action='store_const',
-                        const=True)
-    args = parser.parse_args()
-
-    if args.version:
-        print(VERSION)
-        return
-
-    logging.basicConfig(level=logging.INFO)
-
-    domain = os.environ['DOMAIN']
-    host = os.environ['HOST']
-    token = os.environ['TOKEN']
-
-    api = LinodeAPI(token)
-
+def update_dns(api, domain, host):
     domain_id = None
     for d in api.get_domains():
         if d['domain'] == domain:
@@ -105,6 +87,43 @@ def main():
             if local_ip and local_ip != record_ip:
                 api.update_domain_record_target(
                     domain_id, record['id'], local_ip)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-v',
+        '--version',
+        action='store_const',
+        const=True
+    )
+    parser.add_argument(
+        '-s',
+        type=int,
+        dest='sleep',
+        default=None,
+        help='Run continuously and sleep the specified number of seconds'
+    )
+    args = parser.parse_args()
+
+    if args.version:
+        print(VERSION)
+        return
+
+    logging.basicConfig(level=logging.INFO)
+
+    domain = os.environ['DOMAIN']
+    host = os.environ['HOST']
+    token = os.environ['TOKEN']
+
+    api = LinodeAPI(token)
+
+    if args.sleep is not None:
+        while True:
+            update_dns(api, domain, host)
+            time.sleep(args.sleep)
+    else:
+        update_dns(api, domain, host)
 
 
 if __name__ == "__main__":

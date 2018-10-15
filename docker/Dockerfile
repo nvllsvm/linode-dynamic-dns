@@ -4,5 +4,4 @@ RUN pip3 install --no-cache-dir linode-dynamic-dns
 
 ENV FREQUENCY=15
 
-CMD echo "*/$FREQUENCY * * * * linode-dynamic-dns" | crontab - && \
-    crond -f
+CMD linode-dynamic-dns -s "$(expr "$FREQUENCY" '*' 60)"
