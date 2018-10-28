@@ -8,8 +8,6 @@ import time
 import pkg_resources
 import requests
 
-VERSION = pkg_resources.get_distribution('linode_dynamic_dns').version
-
 LOGGER = logging.getLogger(__name__)
 
 TIMEOUT = 15
@@ -92,10 +90,9 @@ def update_dns(api, domain, host):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-v',
         '--version',
-        action='store_const',
-        const=True
+        action='version',
+        version=pkg_resources.get_distribution('linode_dynamic_dns').version
     )
     parser.add_argument(
         '-s',
