@@ -1,10 +1,8 @@
 from setuptools import setup
 
-VERSION = '0.4.0'
 
 setup(
     name='linode-dynamic-dns',
-    version=VERSION,
     description='Dynamically set the IP of Linode DNS records ',
     long_description=open('README.rst').read(),
     author='Andrew Rabert',
@@ -19,5 +17,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7'
-    ]
+    ],
+    setup_requires=['setuptools_scm'],
+    use_scm_version=True
 )
