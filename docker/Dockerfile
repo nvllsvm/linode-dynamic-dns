@@ -1,4 +1,4 @@
-FROM python:3.7-alpine
+FROM python:alpine
 
 RUN pip3 install --no-cache-dir linode-dynamic-dns
 
