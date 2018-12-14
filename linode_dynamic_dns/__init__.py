@@ -103,10 +103,6 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.version:
-        print(VERSION)
-        return
-
     logging.basicConfig(level=logging.INFO)
 
     domain = os.environ['DOMAIN']
