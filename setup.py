@@ -1,11 +1,14 @@
+import pathlib
+
 from setuptools import setup
 
+REPO = pathlib.Path(__file__).parent
 
 setup(
     name='linode-dynamic-dns',
     version='0.4.0',
     description='Dynamically set the IP of Linode DNS records ',
-    long_description=open('README.rst').read(),
+    long_description=REPO.joinpath('README.rst').read_text(),
     author='Andrew Rabert',
     author_email='ar@nullsum.net',
     url='https://github.com/nvllsvm/linode-dynamic-dns',
