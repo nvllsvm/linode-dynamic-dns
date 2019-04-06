@@ -37,7 +37,6 @@ class LinodeAPI:
         yield from response.json()['data']
 
     def update_domain_record_target(self, domain_id, record_id, target):
-        LOGGER.info(f'Updating IPv{target.version} record')
         response = self.request(
             'PUT',
             f'domains/{domain_id}/records/{record_id}',
@@ -53,7 +52,7 @@ def get_ip(version):
     response.raise_for_status()
     ip = ipaddress.ip_address(response.text.strip())
     if ip and ip.version == version:
-        LOGGER.info(f'Local IPv{version}: {ip}')
+        LOGGER.info(f'Local IPv{version} "{ip}"')
         return ip
     else:
         LOGGER.info(f'No local IPv{version}.')
@@ -82,9 +81,14 @@ def update_dns(api, domain, host):
                 local_ip = get_ip(6)
 
             record_ip = ipaddress.ip_address(record['target'])
+            LOGGER.info(f'Remote IPv{record_ip.version} "{record_ip}"')
             if local_ip and local_ip != record_ip:
+                log_suffix = (f'IPv{local_ip.version} '
+                              f'"{record_ip}" to "{local_ip}"')
+                LOGGER.info(f'Attempting update of {log_suffix}')
                 api.update_domain_record_target(
                     domain_id, record['id'], local_ip)
+                LOGGER.info(f'Successful update of {log_suffix}')
 
 
 def main():
