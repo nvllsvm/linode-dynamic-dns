@@ -6,7 +6,7 @@ REPO = pathlib.Path(__file__).parent
 
 setup(
     name='linode-dynamic-dns',
-    version='0.4.0',
+    version='0.5.0',
     description='Dynamically set the IP of Linode DNS records ',
     long_description=REPO.joinpath('README.rst').read_text(),
     author='Andrew Rabert',
