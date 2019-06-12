@@ -92,7 +92,7 @@ def update_dns(api, domain, host):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser('linode-dynamic-dns')
     parser.add_argument(
         '--version',
         action='version',

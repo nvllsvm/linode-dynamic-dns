@@ -15,7 +15,7 @@ setup(
     packages=['linode_dynamic_dns'],
     install_requires=['requests'],
     entry_points={
-        'console_scripts': ['linode-dynamic-dns=linode_dynamic_dns:main']},
+        'console_scripts': ['linode-dynamic-dns=linode_dynamic_dns.__main__:main']},
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: MIT License',
