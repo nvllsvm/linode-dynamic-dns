@@ -16,7 +16,10 @@ setup(
     url='https://github.com/nvllsvm/linode-dynamic-dns',
     packages=['linode_dynamic_dns'],
     entry_points={
-        'console_scripts': ['linode-dynamic-dns=linode_dynamic_dns.__main__:main']},
+        'console_scripts': [
+            'linode-dynamic-dns=linode_dynamic_dns.__main__:main'
+        ]
+    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: MIT License',
