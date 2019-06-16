@@ -2,7 +2,7 @@ import pathlib
 
 from setuptools import setup
 
-from linode_dynamic_dns import __version__
+from linode_dynamic_dns.__main__ import __version__
 
 REPO = pathlib.Path(__file__).parent
 
