@@ -29,7 +29,12 @@ class LinodeAPI:
             'Accept': 'application/json',
             'Authorization': f'Bearer {self._key}'
         }
-        data = json.dumps(kwargs['json']) if 'json' in kwargs else None
+        if 'json' in kwargs:
+            data = json.dumps(kwargs['json']).encode()
+            headers['Content-Type'] = 'application/json'
+        else:
+            data = None
+
         request = urllib.request.Request(
             url=f'{LINODE_API_URL}/{path}',
             headers=headers,
@@ -49,13 +54,13 @@ class LinodeAPI:
         yield from content['data']
 
     def update_domain_record_target(self, domain_id, record_id, target):
-        response = self.request(
+        status, _ = self.request(
             'PUT',
             f'domains/{domain_id}/records/{record_id}',
             json={'target': str(target)}
         )
-        if response.status != 200:
-            raise http.client.HTTPException(f'status {response.status}')
+        if status != 200:
+            raise http.client.HTTPException(f'status {status}')
 
 
 def get_ip(version):
