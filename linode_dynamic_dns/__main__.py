@@ -1,12 +1,14 @@
 import argparse
+import http.client
 import ipaddress
+import json
 import logging
 import os
 import sys
 import time
+import urllib.request
 
-import pkg_resources
-import requests
+__version__ = '0.6.0'
 
 LOGGER = logging.getLogger(__name__)
 
@@ -20,21 +22,31 @@ LINODE_API_URL = 'https://api.linode.com/v4'
 
 class LinodeAPI:
     def __init__(self, key):
-        self.session = requests.Session()
-        self.session.headers = {'Authorization': f'Bearer {key}'}
+        self._key = key
 
     def request(self, method, path, **kwargs):
-        return self.session.request(
-            method, f'{LINODE_API_URL}/{path}', **kwargs)
+        headers = {
+            'Accept': 'application/json',
+            'Authorization': f'Bearer {self._key}'
+        }
+        data = json.dumps(kwargs['json']) if 'json' in kwargs else None
+        request = urllib.request.Request(
+            url=f'{LINODE_API_URL}/{path}',
+            headers=headers,
+            method=method,
+            data=data
+        )
+        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+            return response.status, json.loads(response.read())
 
     def get_domains(self):
-        response = self.request('GET', 'domains')
+        status, content = self.request('GET', 'domains')
         # TODO: Support pagination
-        yield from response.json()['data']
+        yield from content['data']
 
     def get_domain_records(self, domain_id):
-        response = self.request('GET', f'domains/{domain_id}/records')
-        yield from response.json()['data']
+        status, content = self.request('GET', f'domains/{domain_id}/records')
+        yield from content['data']
 
     def update_domain_record_target(self, domain_id, record_id, target):
         response = self.request(
@@ -42,15 +54,17 @@ class LinodeAPI:
             f'domains/{domain_id}/records/{record_id}',
             json={'target': str(target)}
         )
-        if response.status_code != 200:
-            raise requests.HTTPError('Unexpected response', response=response)
+        if response.status != 200:
+            raise http.client.HTTPException(f'status {response.status}')
 
 
 def get_ip(version):
     url = IP_URLS[version]
-    response = requests.get(url, timeout=TIMEOUT)
-    response.raise_for_status()
-    ip = ipaddress.ip_address(response.text.strip())
+    with urllib.request.urlopen(url, timeout=TIMEOUT) as response:
+        if response.status >= 400:
+            raise http.client.HTTPException(f'status {response.status}')
+        content = response.read()
+    ip = ipaddress.ip_address(content.decode().strip())
     if ip and ip.version == version:
         LOGGER.info(f'Local IPv{version} "{ip}"')
         return ip
@@ -96,7 +110,7 @@ def main():
     parser.add_argument(
         '--version',
         action='version',
-        version=pkg_resources.get_distribution('linode_dynamic_dns').version
+        version=__version__
     )
     parser.add_argument(
         '-s',
