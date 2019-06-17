@@ -10,7 +10,7 @@ import urllib.request
 
 __version__ = '0.6.1'
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__package__)
 
 TIMEOUT = 15
 
@@ -126,7 +126,7 @@ def main():
     )
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(format='%(message)s', level=logging.INFO)
 
     domain = os.environ['DOMAIN']
     host = os.environ['HOST']
