@@ -2,7 +2,7 @@ import pathlib
 
 from setuptools import setup
 
-from linode_dynamic_dns.__main__ import __version__
+from linode_dynamic_dns import __version__
 
 REPO = pathlib.Path(__file__).parent
 
@@ -14,10 +14,10 @@ setup(
     author='Andrew Rabert',
     author_email='ar@nullsum.net',
     url='https://github.com/nvllsvm/linode-dynamic-dns',
-    packages=['linode_dynamic_dns'],
+    py_modules=['linode_dynamic_dns'],
     entry_points={
         'console_scripts': [
-            'linode-dynamic-dns=linode_dynamic_dns.__main__:main'
+            'linode-dynamic-dns=linode_dynamic_dns:main'
         ]
     },
     classifiers=[
