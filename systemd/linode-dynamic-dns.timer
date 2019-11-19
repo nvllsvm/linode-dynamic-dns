@@ -1,0 +1,10 @@
+[Unit]
+Description=Linode Dynamic DNS
+After=network-online.target auditd.service
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target

@@ -30,6 +30,23 @@ Installation
 * `Docker`_
 * `PyPI`_
 
+Systemd Service
+---------------
+
+Example files for a systemd service and timer are in the ``systemd`` directory.
+
+#. Copy the ``.service`` and ``.timer`` files into ``/etc/systemd/system`` and the ``.conf`` into ``/etc``.
+#. Edit the config file as required.
+#. Run the following to enable the service: ::
+
+    systemctl daemon-reload
+    systemctl enable linode-dynamic-dns.timer
+    systemctl start linode-dynamic-dns.timer
+    systemctl start linode-dynamic-dns.service
+
+
+
+
 
 .. |Version| image:: https://img.shields.io/pypi/v/linode-dynamic-dns.svg?
    :target: https://pypi.org/pypi/linode-dynamic-dns
