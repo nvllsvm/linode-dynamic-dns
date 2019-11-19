@@ -34,14 +34,15 @@ Systemd Service
 ---------------
 
 Example files for a systemd service and timer are in the ``systemd`` directory.
+
 #. Copy the ``.service`` and ``.timer`` files into ``/etc/systemd/system`` and the ``.conf`` into ``/etc``.
 #. Edit the config file as required.
-#. Run the following to enable the service::
+#. Run the following to enable the service: ::
 
-   systemctl daemon-reload
-   systemctl enable linode-dynamic-dns.timer
-   systemctl start linode-dynamic-dns.timer
-   systemctl start linode-dynamic-dns.service
+    systemctl daemon-reload
+    systemctl enable linode-dynamic-dns.timer
+    systemctl start linode-dynamic-dns.timer
+    systemctl start linode-dynamic-dns.service
 
 
 
