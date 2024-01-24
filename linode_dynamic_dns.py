@@ -100,6 +100,8 @@ def update_dns(api, domain, host):
                 local_ip = get_ip(4)
             elif record_type == 'AAAA':
                 local_ip = get_ip(6)
+            else:
+                continue
 
             record_ip = ipaddress.ip_address(record['target'])
             LOGGER.info(f'Remote IPv{record_ip.version} "{record_ip}"')
