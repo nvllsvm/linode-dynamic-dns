@@ -4,14 +4,13 @@
 Update Linode DNS records with your local IPv4 and IPv6 addresses.
 
 ## Environment Variables
-| Name                | Description                                                                           |
-|---------------------|---------------------------------------------------------------------------------------|
-| LINODE_ACCESS_TOKEN | Your Linode API access token.                                                         |
-| LINODE_DNS_DOMAIN   | The domain the host is a part of.                                                     |
-| LINODE_DNS_HOSTNAME | The host record to update.                                                            |
-| IPV4_URL            | The URL which returns your local IPv4 address (default `https://ipv4.icanhazip.com/`) |
-| IPV6_URL            | The URL which returns your local IPv6 address (default `https://ipv6.icanhazip.com/`) |
-
+| Name                | Description                                                                                                        |
+|---------------------|--------------------------------------------------------------------------------------------------------------------|
+| LINODE_ACCESS_TOKEN | Your Linode API access token.                                                                                      |
+| LINODE_DNS_DOMAIN   | The domain the host is a part of.                                                                                  |
+| LINODE_DNS_HOSTNAME | The host record to update. set to empty string for the base domain, `*` for wildcard subdomains (default is empty) |
+| IPV4_URL            | The URL which returns your local IPv4 address (default `https://ipv4.icanhazip.com/`)                              |
+| IPV6_URL            | The URL which returns your local IPv6 address (default `https://ipv6.icanhazip.com/`)                              |
 
 ## Installation
 - [Arch Linux](https://aur.archlinux.org/packages/linode-dynamic-dns/)

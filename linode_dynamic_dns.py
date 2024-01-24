@@ -131,7 +131,7 @@ def main():
     logging.basicConfig(format='%(message)s', level=logging.INFO)
 
     domain = os.environ['LINODE_DNS_DOMAIN']
-    host = os.environ['LINODE_DNS_HOSTNAME']
+    host = os.environ.get('LINODE_DNS_HOSTNAME', '')
     token = os.environ['LINODE_ACCESS_TOKEN']
 
     api = LinodeAPI(token)
