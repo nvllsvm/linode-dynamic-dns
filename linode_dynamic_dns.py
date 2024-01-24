@@ -55,11 +55,13 @@ class LinodeAPI:
         status, content = self.request('GET', f'domains/{domain_id}/records')
         yield from content['data']
 
-    def update_domain_record_target(self, domain_id, record_id, target):
+    def update_domain_record_target(self, domain_id, record_id, target,
+                                    ttl_sec):
         status, _ = self.request(
             'PUT',
             f'domains/{domain_id}/records/{record_id}',
-            json={'target': str(target)}
+            json={'target': str(target),
+                  'ttl_sec': ttl_sec}
         )
         if status != 200:
             raise http.client.HTTPException(f'status {status}')
@@ -80,7 +82,8 @@ def get_ip(version):
         return None
 
 
-def update_dns(api, domain, host):
+def update_dns(api, domain, host, disable_ipv4=False, disable_ipv6=False,
+               ttl=None):
     domain_id = None
     for d in api.get_domains():
         if d['domain'] == domain:
@@ -97,21 +100,54 @@ def update_dns(api, domain, host):
             local_ip = None
             record_type = record['type']
             if record_type == 'A':
-                local_ip = get_ip(4)
+                if disable_ipv4:
+                    # TODO delete record
+                    continue
+                else:
+                    local_ip = get_ip(4)
             elif record_type == 'AAAA':
-                local_ip = get_ip(6)
+                if disable_ipv6:
+                    # TODO delete record
+                    continue
+                else:
+                    local_ip = get_ip(6)
             else:
                 continue
 
             record_ip = ipaddress.ip_address(record['target'])
-            LOGGER.info(f'Remote IPv{record_ip.version} "{record_ip}"')
+            record_ttl = record['ttl_sec']
+            LOGGER.info(
+                f'Remote IPv{record_ip.version} "{record_ip}" '
+                f'(TTL {record_ttl})')
+
+            should_update = False
             if local_ip and local_ip != record_ip:
-                log_suffix = (f'IPv{local_ip.version} '
-                              f'"{record_ip}" to "{local_ip}"')
+                should_update = True
+            if record_ttl != ttl:
+                should_update = True
+
+            if should_update:
+                log_suffix = (
+                    f'IPv{local_ip.version} '
+                    f'"{record_ip}" (TTL {record_ttl or "default"}) '
+                    f'to "{local_ip}" (TTL {ttl or "default"})')
                 LOGGER.info(f'Attempting update of {log_suffix}')
                 api.update_domain_record_target(
-                    domain_id, record['id'], local_ip)
+                    domain_id, record['id'], local_ip, ttl_sec=ttl)
                 LOGGER.info(f'Successful update of {log_suffix}')
+
+
+_TRUE_VALUES = ('y', 'yes', 'true', '1')
+_FALSE_VALUES = ('n', 'no', 'false', '0', '')
+
+
+def strtobool(value):
+    if value in _TRUE_VALUES:
+        return True
+    elif value in _FALSE_VALUES:
+        return False
+    else:
+        raise ValueError(f'must be one of {_TRUE_VALUES + _FALSE_VALUES}')
 
 
 def main():
@@ -135,15 +171,27 @@ def main():
     domain = os.environ['LINODE_DNS_DOMAIN']
     host = os.environ.get('LINODE_DNS_HOSTNAME', '')
     token = os.environ['LINODE_ACCESS_TOKEN']
+    ttl = os.environ.get('LINODE_DNS_TTL') or None
+    if ttl is not None:
+        ttl = int(ttl)
+
+    disable_ipv4 = strtobool(os.environ.get('DISABLE_IPV4', ''))
+    disable_ipv6 = strtobool(os.environ.get('DISABLE_IPV6', ''))
 
     api = LinodeAPI(token)
 
-    if args.sleep is not None:
-        while True:
-            update_dns(api, domain, host)
-            time.sleep(args.sleep)
-    else:
-        update_dns(api, domain, host)
+    while True:
+        update_dns(
+            api,
+            domain,
+            host,
+            disable_ipv4=disable_ipv4,
+            disable_ipv6=disable_ipv6,
+            ttl=ttl,
+        )
+        if args.sleep is None:
+            break
+        time.sleep(args.sleep)
 
 
 if __name__ == "__main__":
