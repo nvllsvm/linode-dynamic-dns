@@ -11,7 +11,8 @@ import urllib.request
 
 __version__ = '0.6.2'
 
-LOGGER = logging.getLogger(__package__)
+APP_NAME = 'linode-dynamic-dns'
+LOGGER = logging.getLogger(APP_NAME)
 
 TIMEOUT = 15
 
@@ -112,7 +113,7 @@ def update_dns(api, domain, host):
 
 
 def main():
-    parser = argparse.ArgumentParser('linode-dynamic-dns')
+    parser = argparse.ArgumentParser(APP_NAME)
     parser.add_argument(
         '--version',
         action='version',
