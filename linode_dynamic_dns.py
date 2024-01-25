@@ -82,8 +82,7 @@ def get_ip(version):
         return None
 
 
-def update_dns(api, domain, host, disable_ipv4=False, disable_ipv6=False,
-               ttl=None):
+def update_dns(api, domain, host, disable_ipv4, disable_ipv6, ttl):
     domain_id = None
     for d in api.get_domains():
         if d['domain'] == domain:
@@ -150,6 +149,34 @@ def strtobool(value):
         raise ValueError(f'must be one of {_TRUE_VALUES + _FALSE_VALUES}')
 
 
+# taken from https://www.linode.com/docs/api/domains/
+_VALID_TTL = [
+    300,
+    3600,
+    7200,
+    14400,
+    28800,
+    57600,
+    86400,
+    172800,
+    345600,
+    604800,
+    1209600,
+    2419200,
+]
+
+_DEFAULT_TTL = 300
+
+
+def _parse_ttl(value):
+    if value:
+        value = int(value)
+        if value not in _VALID_TTL:
+            raise ValueError(f'must be one of {_VALID_TTL}')
+    else:
+        value = _DEFAULT_TTL
+
+
 def main():
     parser = argparse.ArgumentParser(APP_NAME)
     parser.add_argument(
@@ -171,10 +198,7 @@ def main():
     domain = os.environ['LINODE_DNS_DOMAIN']
     host = os.environ.get('LINODE_DNS_HOSTNAME', '')
     token = os.environ['LINODE_ACCESS_TOKEN']
-    ttl = os.environ.get('LINODE_DNS_TTL') or None
-    if ttl is not None:
-        ttl = int(ttl)
-
+    ttl = _parse_ttl(os.environ.get('LINODE_DNS_TTL'))
     disable_ipv4 = strtobool(os.environ.get('DISABLE_IPV4', ''))
     disable_ipv6 = strtobool(os.environ.get('DISABLE_IPV6', ''))
 
