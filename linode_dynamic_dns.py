@@ -66,6 +66,28 @@ class LinodeAPI:
         if status != 200:
             raise http.client.HTTPException(f'status {status}')
 
+    def create_domain_record(self, domain_id, host, record_type, target, ttl_sec):
+        status, _ = self.request(
+            'POST',
+            f'domains/{domain_id}/records',
+            json={
+                'name': host,
+                'type': record_type,
+                'target': str(target),
+                'ttl_sec': ttl_sec,
+            }
+        )
+        if status != 200:
+            raise http.client.HTTPException(f'status {status}')
+
+    def delete_domain_record(self, domain_id, record_id):
+        status, _ = self.request(
+            'DELETE',
+            f'domains/{domain_id}/records/{record_id}',
+        )
+        if status != 200:
+            raise http.client.HTTPException(f'status {status}')
+
 
 def get_ip(version):
     url = IP_URLS[version]
@@ -82,7 +104,8 @@ def get_ip(version):
         return None
 
 
-def update_dns(api, domain, host, disable_ipv4, disable_ipv6, ttl):
+def update_dns(api, domain, host, disable_ipv4, disable_ipv6, ttl,
+               local_ipv4=None, local_ipv6=None):
     domain_id = None
     for d in api.get_domains():
         if d['domain'] == domain:
@@ -93,47 +116,80 @@ def update_dns(api, domain, host, disable_ipv4, disable_ipv6, ttl):
         print(f'Error: Domain "{domain}" not found')
         sys.exit(1)
 
+    record_a = None
+    record_aaaa = None
+
     # TODO: Delete invalid records and duplicates
     for record in api.get_domain_records(domain_id):
         if record['name'] == host:
-            local_ip = None
             record_type = record['type']
             if record_type == 'A':
-                if disable_ipv4:
-                    # TODO delete record
-                    continue
-                else:
-                    local_ip = get_ip(4)
+                record_a = record
             elif record_type == 'AAAA':
-                if disable_ipv6:
-                    # TODO delete record
-                    continue
-                else:
-                    local_ip = get_ip(6)
+                record_aaaa = record
             else:
                 continue
 
-            record_ip = ipaddress.ip_address(record['target'])
-            record_ttl = record['ttl_sec']
-            LOGGER.info(
-                f'Remote IPv{record_ip.version} "{record_ip}" '
-                f'(TTL {record_ttl})')
+    if disable_ipv4:
+        if record_a:
+            _delete_record(api, domain_id, record_a)
+    else:
+        local_ip = local_ipv4 or get_ip(4)
+        if record_a:
+            _update_record(api, domain_id, local_ip, ttl, record_a)
+        else:
+            _create_record(api, domain_id, host, local_ip, ttl, 'A')
 
-            should_update = False
-            if local_ip and local_ip != record_ip:
-                should_update = True
-            if record_ttl != ttl:
-                should_update = True
+    if disable_ipv6:
+        if record_aaaa:
+            _delete_record(api, domain_id, record_aaaa)
+    else:
+        local_ip = local_ipv6 or get_ip(6)
+        if record_aaaa:
+            _update_record(api, domain_id, local_ip, ttl, record_aaaa)
+        else:
+            _create_record(api, domain_id, host, local_ip, ttl, 'AAAA')
 
-            if should_update:
-                log_suffix = (
-                    f'IPv{local_ip.version} '
-                    f'"{record_ip}" (TTL {record_ttl or "default"}) '
-                    f'to "{local_ip}" (TTL {ttl or "default"})')
-                LOGGER.info(f'Attempting update of {log_suffix}')
-                api.update_domain_record_target(
-                    domain_id, record['id'], local_ip, ttl_sec=ttl)
-                LOGGER.info(f'Successful update of {log_suffix}')
+
+def _create_record(api, domain_id, host, local_ip, ttl, record_type):
+    log_suffix = (
+        f'IPv{local_ip.version} '
+        f'"{local_ip}" (TTL {ttl})')
+    LOGGER.info(f'Creating {log_suffix}')
+    api.create_domain_record(
+        domain_id, host, record_type, local_ip, ttl_sec=ttl)
+    LOGGER.info(f'Successful creation of {log_suffix}')
+
+
+def _update_record(api, domain_id, local_ip, ttl, record):
+    record_ip = ipaddress.ip_address(record['target'])
+    record_ttl = record['ttl_sec']
+    LOGGER.info(
+        f'Remote IPv{record_ip.version} "{record_ip}" '
+        f'(TTL {record_ttl})')
+
+    should_update = False
+    if local_ip and local_ip != record_ip:
+        should_update = True
+    if record_ttl != ttl:
+        should_update = True
+
+    if should_update:
+        log_suffix = (
+            f'IPv{local_ip.version} '
+            f'"{record_ip}" (TTL {record_ttl}) '
+            f'to "{local_ip}" (TTL {ttl})')
+        LOGGER.info(f'Attempting update of {log_suffix}')
+        api.update_domain_record_target(
+            domain_id, record['id'], local_ip, ttl_sec=ttl)
+        LOGGER.info(f'Successful update of {log_suffix}')
+
+
+def _delete_record(api, domain_id, record):
+    record_ip = ipaddress.ip_address(record['target'])
+    LOGGER.info(f'Attempting deletion of IPv{record_ip.version}')
+    api.delete_domain_record(domain_id, record['id'])
+    LOGGER.info(f'Successful deletion of IPv{record_ip.version}')
 
 
 _TRUE_VALUES = ('y', 'yes', 'true', '1')
@@ -175,6 +231,7 @@ def _parse_ttl(value):
             raise ValueError(f'must be one of {_VALID_TTL}')
     else:
         value = _DEFAULT_TTL
+    return value
 
 
 def main():
@@ -199,8 +256,18 @@ def main():
     host = os.environ.get('LINODE_DNS_HOSTNAME', '')
     token = os.environ['LINODE_ACCESS_TOKEN']
     ttl = _parse_ttl(os.environ.get('LINODE_DNS_TTL'))
-    disable_ipv4 = strtobool(os.environ.get('DISABLE_IPV4', ''))
-    disable_ipv6 = strtobool(os.environ.get('DISABLE_IPV6', ''))
+    disable_ipv4 = strtobool(os.environ.get('IPV4_DISABLE', ''))
+    disable_ipv6 = strtobool(os.environ.get('IPV6_DISABLE', ''))
+    local_ipv4 = os.environ.get('IPV4_ADDRESS')
+    local_ipv6 = os.environ.get('IPV6_ADDRESS')
+    if local_ipv4 is not None:
+        local_ipv4 = ipaddress.ip_address(local_ipv4)
+        if local_ipv4.version != 4:
+            raise ValueError('invalid IPv4 address')
+    if local_ipv6 is not None:
+        local_ipv6 = ipaddress.ip_address(local_ipv6)
+        if local_ipv6.version != 6:
+            raise ValueError('invalid IPv6 address')
 
     api = LinodeAPI(token)
 
@@ -212,6 +279,8 @@ def main():
             disable_ipv4=disable_ipv4,
             disable_ipv6=disable_ipv6,
             ttl=ttl,
+            local_ipv4=local_ipv4,
+            local_ipv6=local_ipv6,
         )
         if args.sleep is None:
             break

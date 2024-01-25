@@ -6,14 +6,16 @@ Update Linode DNS records with your local IPv4 and IPv6 addresses.
 ## Environment Variables
 | Name                | Description                                                                                                        |
 |---------------------|--------------------------------------------------------------------------------------------------------------------|
+| IPV4_ADDRESS        | IPv4 address to use in the A record                                                                                |
+| IPV4_DISABLE        | Disable IPv4 updates.                                                                                              |
+| IPV4_URL            | The URL which returns your local IPv4 address (default `https://ipv4.icanhazip.com/`)                              |
+| IPV6_ADDRESS        | IPv6 address to use in the A record                                                                                |
+| IPV6_DISABLE        | Disable IPv6 updates.                                                                                              |
+| IPV6_URL            | The URL which returns your local IPv6 address (default `https://ipv6.icanhazip.com/`)                              |
 | LINODE_ACCESS_TOKEN | Your Linode API access token.                                                                                      |
 | LINODE_DNS_DOMAIN   | The domain the host is a part of.                                                                                  |
 | LINODE_DNS_HOSTNAME | The host record to update. set to empty string for the base domain, `*` for wildcard subdomains (default is empty) |
-| LINODE_DNS_TTL      | Record TTL. Unset or empty to use the Linode default TTL. (default is empty)                                       |
-| DISABLE_IPV4        | Disable IPv4 updates.                                                                                              |
-| DISABLE_IPV6        | Disable IPv6 updates.                                                                                              |
-| IPV4_URL            | The URL which returns your local IPv4 address (default `https://ipv4.icanhazip.com/`)                              |
-| IPV6_URL            | The URL which returns your local IPv6 address (default `https://ipv6.icanhazip.com/`)                              |
+| LINODE_DNS_TTL      | Record TTL in seconds (default 300)                                                                                |
 
 ## Installation
 - [Arch Linux](https://aur.archlinux.org/packages/linode-dynamic-dns/)
