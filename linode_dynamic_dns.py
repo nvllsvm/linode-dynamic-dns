@@ -116,37 +116,41 @@ def update_dns(api, domain, host, disable_ipv4, disable_ipv6, ttl,
         print(f'Error: Domain "{domain}" not found')
         sys.exit(1)
 
-    record_a = None
-    record_aaaa = None
+    record_a = []
+    record_aaaa = []
 
     # TODO: Delete invalid records and duplicates
     for record in api.get_domain_records(domain_id):
         if record['name'] == host:
             record_type = record['type']
             if record_type == 'A':
-                record_a = record
+                record_a.append(record)
             elif record_type == 'AAAA':
-                record_aaaa = record
+                record_aaaa.append(record)
             else:
                 continue
 
     if disable_ipv4:
-        if record_a:
-            _delete_record(api, domain_id, record_a)
+        for record in record_a:
+            _delete_record(api, domain_id, record)
     else:
         local_ip = local_ipv4 or get_ip(4)
         if record_a:
-            _update_record(api, domain_id, local_ip, ttl, record_a)
+            _update_record(api, domain_id, local_ip, ttl, record_a[0])
+            for record in record_a[1:]:
+                _delete_record(api, domain_id, record)
         else:
             _create_record(api, domain_id, host, local_ip, ttl, 'A')
 
     if disable_ipv6:
-        if record_aaaa:
-            _delete_record(api, domain_id, record_aaaa)
+        for record in record_aaaa:
+            _delete_record(api, domain_id, record)
     else:
         local_ip = local_ipv6 or get_ip(6)
         if record_aaaa:
-            _update_record(api, domain_id, local_ip, ttl, record_aaaa)
+            _update_record(api, domain_id, local_ip, ttl, record_aaaa[0])
+            for record in record_aaaa[1:]:
+                _delete_record(api, domain_id, record)
         else:
             _create_record(api, domain_id, host, local_ip, ttl, 'AAAA')
 
