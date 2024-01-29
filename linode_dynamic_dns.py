@@ -252,10 +252,11 @@ def main():
         default=os.environ.get('LINODE_ACCESS_TOKEN'),
         help='(env: LINODE_ACCESS_TOKEN)')
     parser.add_argument(
-        '--sleep',
-        type=int,
-        default=None,
-        help='Run continuously and sleep the specified number of seconds'
+        '--update-interval',
+        metavar='SECONDS',
+        default=os.environ.get('UPDATE_INTERVAL'),
+        help=('Run continuously and update the DNS record every n-seconds '
+              '(env: UPDATE_INTERVAL)'),
     )
     parser.add_argument(
         '--version',
@@ -339,6 +340,9 @@ def main():
     api = LinodeAPI(args.access_token)
     iplookup = IPLookup(ipv4_url=args.ipv4_url, ipv6_url=args.ipv6_url)
 
+    update_interval = args.update_interval
+    if update_interval is not None:
+        update_interval = int(update_interval)
     while True:
         update_dns(
             api,
@@ -351,9 +355,9 @@ def main():
             local_ipv4=local_ipv4,
             local_ipv6=local_ipv6,
         )
-        if args.sleep is None:
+        if update_interval is None:
             break
-        time.sleep(args.sleep)
+        time.sleep(update_interval)
 
 
 if __name__ == "__main__":
