@@ -127,7 +127,7 @@ class IPLookup:
         return self._request(self.ipv4_url, version=4)
 
     def get_ipv6(self):
-        return self._request(self.ipv4_url, version=6)
+        return self._request(self.ipv6_url, version=6)
 
 
 def update_dns(api, domain, host, disable_ipv4, disable_ipv6, ttl, iplookup,
@@ -331,7 +331,7 @@ def main():
     if local_ipv4 is not None:
         local_ipv4 = ipaddress.ip_address(local_ipv4)
         if local_ipv4.version != 4:
-            parser.error('invalif IPv4 address')
+            parser.error('invalid IPv4 address')
     if local_ipv6 is not None:
         local_ipv6 = ipaddress.ip_address(local_ipv6)
         if local_ipv6.version != 6:
