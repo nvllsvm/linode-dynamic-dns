@@ -16,6 +16,7 @@ Update Linode DNS records with your local IPv4 and IPv6 addresses.
 | LINODE_DNS_DOMAIN   | The domain the host is a part of.                                                                                  |
 | LINODE_DNS_HOSTNAME | The host record to update. set to empty string for the base domain, `*` for wildcard subdomains (default is empty) |
 | LINODE_DNS_TTL      | Record TTL in seconds (default 300)                                                                                |
+| UPDATE_INTERVAL     | Run continuously and update the DNS record every `UPDATE_INTERVAL`-seconds (default disabled)                      |
 
 ## Installation
 - [Arch Linux](https://aur.archlinux.org/packages/linode-dynamic-dns/)
