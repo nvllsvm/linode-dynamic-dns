@@ -23,6 +23,18 @@ Update Linode DNS records with your local IPv4 and IPv6 addresses.
 - [Docker](https://hub.docker.com/r/nvllsvm/linode-dynamic-dns/)
 - [PyPI](https://pypi.org/pypi/linode-dynamic-dns)
 
+## Docker Example
+This example will update the IPv4 address for the wildcard subdomain every 5 minutes.
+```
+docker run \
+    -e IPV6_DISABLE=true \
+    -e LINODE_ACCESS_TOKEN="$LINODE_ACCESS_TOKEN" \
+    -e LINODE_DNS_DOMAIN=yourdomain.com \
+    -e LINODE_DNS_HOSTNAME='*' \
+    -e UPDATE_INTERVAL=300 \
+    nvllsvm/linode-dynamic-dns
+```
+
 ## Systemd Service
 Example files for a systemd service and timer are in the `systemd` directory.
 
