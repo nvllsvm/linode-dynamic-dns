@@ -9,7 +9,7 @@ import sys
 import time
 import urllib.request
 
-__version__ = '0.6.2'
+__version__ = '0.7.0'
 
 APP_NAME = 'linode-dynamic-dns'
 LOGGER = logging.getLogger(APP_NAME)
